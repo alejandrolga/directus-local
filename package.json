@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@directus/sdk": "^16.0.1",
+    "directus-extension-computed-interface": "^1.9.0"
+  }
+}
