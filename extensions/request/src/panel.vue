@@ -11,8 +11,8 @@
         </template>
     </v-card-actions>
 
-    <v-table class="directus-container" :headers="tableHeaders" :items="filteredResults"
-        :server-items-length="filteredResults.length" item-value="id" :loading="loading" @click:row="handleRowClick"
+    <v-table class="directus-container" :headers="tableHeaders" :items="formattedResults"
+        :server-items-length="formattedResults.length" item-value="id" :loading="loading" @click:row="handleRowClick"
         fixed-header show-resize allow-header-reorder>
         <template #header-context-menu="{ header }">
             <v-list>
@@ -32,6 +32,8 @@
 <script>
 import SearchInput from './search-input.vue';
 import FilterApplier from './filterApplier'; // Importamos la clase FilterApplier
+import HeaderFormatter from './headerFormatter'; // Importamos la clase HeaderFormatter
+import DateFormatter from './dateFormatter'; // Importamos la clase DateFormatter
 
 export default {
     props: {
@@ -68,7 +70,8 @@ export default {
         },
         filter: {
             deep: true,
-            handler() {
+            handler(newFilter) {
+                localStorage.setItem('filter', JSON.stringify(newFilter));
                 this.executeQuery();
             },
         },
@@ -85,6 +88,17 @@ export default {
                 );
                 const matchesFilter = !Object.keys(this.filter).length || FilterApplier.applyFilter(item, this.filter);
                 return matchesSearchQuery && matchesFilter;
+            });
+        },
+        formattedResults() {
+            return this.filteredResults.map(item => {
+                const newItem = { ...item };
+                for (const key in newItem) {
+                    if (this.isDateField(key)) {
+                        newItem[key] = DateFormatter.formatDate(newItem[key]);
+                    }
+                }
+                return newItem;
             });
         }
     },
@@ -109,7 +123,7 @@ export default {
                 if (this.result.length === 0) {
                     this.infoMessage = "No results found.";
                 } else {
-                    this.tableHeaders = this.getHeaders(this.result);
+                    this.tableHeaders = HeaderFormatter.formatHeaders(Object.keys(this.result[0]));
                 }
             } catch (error) {
                 console.error("Error executing query:", error);
@@ -119,19 +133,11 @@ export default {
                 this.loading = false;
             }
         },
-        getHeaders(data) {
-            if (data.length === 0) return [];
-            const keys = Object.keys(data[0]);
-            return keys.map((key) => ({
-                text: key,
-                value: key,
-                sortable: true,
-                resizable: true,
-                width: "250",
-            }));
+        isDateField(fieldName) {
+            return fieldName.toLowerCase().includes('date') || fieldName.toLowerCase().includes('time');
         },
         onSortChange(by, desc) {
-            this.result.sort((a, b) => {
+            this.result = this.result.sort((a, b) => {
                 const aValue = a[by];
                 const bValue = b[by];
                 if (aValue < bValue) return desc ? 1 : -1;
@@ -151,13 +157,23 @@ export default {
         clearFilters() {
             this.filter = {};
             this.searchQuery = "";
+            localStorage.removeItem('filter');
+            this.executeQuery();
+        },
+        loadStoredFilters() {
+            const storedFilter = localStorage.getItem('filter');
+            const storedSearchQuery = localStorage.getItem('searchQuery');
+            if (storedFilter) {
+                this.filter = JSON.parse(storedFilter);
+            }
+            if (storedSearchQuery) {
+                this.searchQuery = storedSearchQuery;
+            }
         },
     },
     mounted() {
+        this.loadStoredFilters();
         this.executeQuery();
-
-        const savedSearchQuery = localStorage.getItem('searchQuery');
-        this.searchQuery = savedSearchQuery !== null ? savedSearchQuery : "";
     },
 };
 </script>
