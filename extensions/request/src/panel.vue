@@ -11,8 +11,8 @@
         </template>
     </v-card-actions>
 
-    <v-table class="directus-container" :headers="tableHeaders" :items="formattedResults"
-        :server-items-length="formattedResults.length" item-value="id" :loading="loading" @click:row="handleRowClick"
+    <v-table class="directus-container" :headers="tableHeaders" :items="filteredResults"
+        :server-items-length="filteredResults.length" item-value="id" :loading="loading" @click:row="handleRowClick"
         fixed-header show-resize allow-header-reorder>
         <template #header-context-menu="{ header }">
             <v-list>
@@ -31,6 +31,7 @@
 
 <script>
 import SearchInput from './search-input.vue';
+import FilterApplier from './filterApplier'; // Importamos la clase FilterApplier
 
 export default {
     props: {
@@ -74,29 +75,16 @@ export default {
     },
     computed: {
         filteredResults() {
+            console.log("Applying filter:", this.filter);
             if (!this.searchQuery && !Object.keys(this.filter).length) {
                 return this.result;
             }
-            const searchTerm = this.searchQuery.toLowerCase();
             return this.result.filter(item => {
-                const matchesSearchQuery = Object.values(item).some(value =>
-                    value != null && String(value).toLowerCase().includes(searchTerm)
+                const matchesSearchQuery = !this.searchQuery || Object.values(item).some(value =>
+                    value != null && String(value).includes(this.searchQuery)
                 );
-                const matchesFilter = Object.keys(this.filter).every(key =>
-                    item[key] === this.filter[key]
-                );
+                const matchesFilter = !Object.keys(this.filter).length || FilterApplier.applyFilter(item, this.filter);
                 return matchesSearchQuery && matchesFilter;
-            });
-        },
-        formattedResults() {
-            return this.filteredResults.map(item => {
-                const newItem = { ...item };
-                for (const key in newItem) {
-                    if (this.isDateField(key) && this.isTimestamp(newItem[key])) {
-                        newItem[key] = new Date(newItem[key]).toISOString();
-                    }
-                }
-                return newItem;
             });
         }
     },
@@ -110,7 +98,7 @@ export default {
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ variable: this.query, filter: this.filter }),
+                    body: JSON.stringify({ variable: this.query, filter: this.filter || {} }),
                 });
                 if (!response.ok) {
                     throw new Error("Invalid SQL request");
@@ -135,29 +123,12 @@ export default {
             if (data.length === 0) return [];
             const keys = Object.keys(data[0]);
             return keys.map((key) => ({
-                text: this.formatHeader(key),
+                text: key,
                 value: key,
                 sortable: true,
                 resizable: true,
                 width: "250",
             }));
-        },
-        formatHeader(header) {
-            if (header === 'sku' || header === 'id') {
-                return header.toUpperCase();
-            }
-            return header.split('_').map((word, index) => {
-                if (index === 0) {
-                    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                }
-                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-            }).join(' ');
-        },
-        isTimestamp(value) {
-            return typeof value === 'number' && new Date(value).getTime() > 0;
-        },
-        isDateField(fieldName) {
-            return fieldName.toLowerCase().includes('date');
         },
         onSortChange(by, desc) {
             this.result.sort((a, b) => {
@@ -175,7 +146,7 @@ export default {
             this.searchQuery = "";
         },
         handleFilterUpdate(newFilter) {
-            this.filter = newFilter;
+            this.filter = newFilter || {};
         },
         clearFilters() {
             this.filter = {};
@@ -203,6 +174,3 @@ export default {
     transform: scaleY(-1);
 }
 </style>
-
-
-
