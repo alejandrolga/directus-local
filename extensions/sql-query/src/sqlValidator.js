@@ -13,9 +13,19 @@ class SQLValidator {
             'DROP TABLE',
             'TRUNCATE',
             'EXEC',
-            'EXECUTE'
+            'EXECUTE',
+            'INSERT',
+            'UPDATE',
+            'DELETE',
+            'DROP',
+            'TRUNCATE',
+            'ALTER',
+            'CREATE',
+            'EXECUTE',
+            'GRANT',
+            'REVOKE'
         ];
-        this.regex = new RegExp(this.forbiddenKeywords.join('|'), 'i');
+        this.regex = new RegExp(this.forbiddenKeywords.map(word => `\\b${word}\\b`).join('|'), 'i');
     }
 
     validate(query) {

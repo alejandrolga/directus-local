@@ -30,7 +30,6 @@
           <td>{{ format_text ? formatTitle(item.name) : item.name }}</td>
           <td>{{ format_text ? formatDate(item.date) : item.date }}</td>
           <td>{{ format_text ? formatCurrency(item.balance) : item.balance }}</td>
-          <!-- Otros campos -->
         </tr>
       </template>
     </v-table>
@@ -40,7 +39,6 @@
   import SearchInput from './search-input.vue';
   import FilterApplier from './filterApplier';
   import { formatTitle } from '@directus/format-title';
-  import { getUserName } from './getUserName';
   
   export default {
     props: {
@@ -70,7 +68,6 @@
         infoMessage: "",
         tableHeaders: [],
         loading: false,
-        userCache: {}
       };
     },
     watch: {
@@ -142,7 +139,7 @@
             this.infoMessage = "No results found.";
           } else {
             this.tableHeaders = this.formatHeaders(Object.keys(this.result[0]));
-            await this.updateFormattedResults();
+            this.updateFormattedResults();
           }
           this.updateInfoMessage();
         } catch (error) {
@@ -154,20 +151,11 @@
         }
       },
       async updateFormattedResults() {
-        const results = await Promise.all(this.filteredResults.map(async item => {
+        const results = this.filteredResults.map(item => {
           const newItem = { ...item };
-          const userFields = Object.keys(newItem).filter(key => key.toLowerCase().includes('user'));
-          for (const field of userFields) {
-            if (newItem[field]) {
-              const userName = await getUserName(newItem[field]);
-              if (userName) {
-                newItem[field] = this.format_text ? userName : newItem[field];
-              }
-            }
-          }
           this.convertDates(newItem);
           return newItem;
-        }));
+        });
         this.formattedResults = results;
       },
       convertDates(item) {
@@ -197,7 +185,6 @@
       },
       handleFilterUpdate(newFilter) {
         this.filter = newFilter || {};
-        console.log(this.filter)
         this.updateInfoMessage();
       },
       clearFilters() {
