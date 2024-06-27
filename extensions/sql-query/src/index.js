@@ -10,12 +10,12 @@ export default {
             try {
                 const { variable } = req.body;
                 const { headers } = req;
-/*
-                if (headers['directus-sql'] !== 'true'){
-                    res.status(500).send('Unauthorized request')
-                    return;
-                }
-*/
+                /*
+                                if (headers['directus-sql'] !== 'true'){
+                                    res.status(500).send('Unauthorized request')
+                                    return;
+                                }
+                */
                 sqlValidator.validate(variable);
 
                 const result = await database.raw(variable);
