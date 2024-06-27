@@ -4,15 +4,30 @@
       <v-info type="info">{{ infoMessage }}</v-info>
     </v-card-text>
 
-    <search-input v-if="enable_search" v-model="searchQuery" collection="motion_graphic" placeholder="Search Items..."
-      v-model:filter="filter" @update:filter="handleFilterUpdate" />
+    <search-input
+      v-if="enable_search"
+      v-model="searchQuery"
+      collection="motion_graphic"
+      placeholder="Search Items..."
+      v-model:filter="filter"
+      @update:filter="handleFilterUpdate"
+    />
     <template #append>
       <v-button @click="clearFilters">{{ t('clear_filters') }}</v-button>
     </template>
   </v-card-actions>
-  <v-table class="directus-container" :headers="formattedHeaders" :items="formattedResults"
-    :server-items-length="formattedResults.length" item-value="id" :loading="loading" @click:row="handleRowClick"
-    fixed-header show-resize allow-header-reorder>
+  <v-table
+    class="directus-container"
+    :headers="formattedHeaders"
+    :items="formattedResults"
+    :server-items-length="formattedResults.length"
+    item-value="id"
+    :loading="loading"
+    @click:row="handleRowClick"
+    fixed-header
+    show-resize
+    allow-header-reorder
+  >
     <template #header-context-menu="{ header }">
       <v-list>
         <v-list-item clickable @click="onSortChange(header.value, false)">
@@ -117,6 +132,14 @@ export default {
     async executeQuery() {
       this.infoMessage = "";
       this.loading = true;
+
+      // Validación de la consulta SQL
+      if (!this.validateSQLQuery(this.query)) {
+        this.infoMessage = "Cannot be executed for security reasons.";
+        this.loading = false;
+        return;
+      }
+
       try {
         const response = await fetch("/request/7kQ9dF2vX6bM3rL8wA4jZ5nH1pT0cY7", {
           method: "POST",
@@ -145,6 +168,22 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    validateSQLQuery(query) {
+      const forbiddenWords = [
+        'ALTER TABLE', 'UPDATE', 'DELETE', 'INSERT INTO', 'CREATE DATABASE',
+        'DROP DATABASE', 'BACKUP DATABASE', 'CREATE TABLE', 'DROP TABLE',
+        'TRUNCATE', 'EXEC', 'EXECUTE', 'INSERT', 'UPDATE', 'DELETE', 'DROP',
+        'TRUNCATE', 'ALTER', 'CREATE', 'EXECUTE', 'GRANT', 'REVOKE'
+      ];
+
+      const lowerCaseQuery = query.toLowerCase();
+      for (const word of forbiddenWords) {
+        if (lowerCaseQuery.includes(word.toLowerCase())) {
+          return false;
+        }
+      }
+      return true;
     },
     async fetchUserDetails(userUUIDs) {
       const validUUIDs = userUUIDs.filter(uuid => typeof uuid === 'string' && uuid.trim().length > 0);
