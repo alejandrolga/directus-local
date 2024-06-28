@@ -283,8 +283,10 @@ export default {
       this.updateFormattedResults();
     },
     handleRowClick({ item }) {
-      this.$router.push(`${BASE_CONTENT_URL}/${item.id}`);
-    },
+  if (item && item.id) {
+    this.$router.push(`${BASE_CONTENT_URL}/${item.id}`);
+  }
+},
     clearSearch() {
       this.searchQuery = "";
       this.updateInfoMessage();

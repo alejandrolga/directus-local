@@ -9,13 +9,7 @@ export default {
         router.post('/7kQ9dF2vX6bM3rL8wA4jZ5nH1pT0cY7', async (req, res) => {
             try {
                 const { variable } = req.body;
-                const { headers } = req;
-                /*
-                                if (headers['directus-sql'] !== 'true'){
-                                    res.status(500).send('Unauthorized request')
-                                    return;
-                                }
-                */
+
                 sqlValidator.validate(variable);
 
                 const result = await database.raw(variable);
